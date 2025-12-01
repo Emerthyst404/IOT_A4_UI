@@ -186,12 +186,14 @@ st.divider()
 col1, col2 = st.columns([1, 1])
 
 with col1:
+
+    # Topic Section 
     st.subheader("Discovered Topics")
     
-    # Filter options
+    # Filter options for topics 
     filter_text = st.text_input("Filter topics", placeholder="e.g., sht40, mic")
     
-    # Sort topics
+    # Sort the topics found under SENG3030
     sorted_topics = sorted(st.session_state.discovered_topics)
     if filter_text:
         sorted_topics = [t for t in sorted_topics if filter_text.lower() in t.lower()]
@@ -199,7 +201,7 @@ with col1:
     st.write(f"**Total topics discovered:** {len(st.session_state.discovered_topics)}")
     st.write(f"**Filtered topics:** {len(sorted_topics)}")
     
-    # Display topics in an expander
+    # Display the topics in an expander
     with st.expander("View All Topics", expanded=True):
         if sorted_topics:
             for topic in sorted_topics[:50]:  # Limit display to 50
@@ -216,9 +218,8 @@ with col1:
             st.info("No topics discovered yet. Messages will appear here as they arrive.")
 
 with col2:
+   # Add/manage devices section
     st.subheader("Device Management")
-    
-    # Add/manage devices
     st.write("**Configure Devices:**")
     
     # Add new device
@@ -233,7 +234,7 @@ with col2:
             else:
                 st.warning(f"Device {new_device} already exists")
     
-    # Display managed devices
+        # Display managed devices
     if st.session_state.managed_devices:
         st.write("**Managed Devices:**")
         for device in st.session_state.managed_devices:
@@ -241,18 +242,28 @@ with col2:
                 subs = st.session_state.device_subscriptions[device]
                 st.write(f"Active subscriptions: {len(subs)}")
                 
+                # Fixed indentation here - moved left by one level
                 if subs:
                     st.write("**Current subscriptions:**")
-                    for sub in subs:
+                    
+                    for sub in list(subs):
+                        # Create two columns: one for topic name, one for button
                         col_sub1, col_sub2 = st.columns([3, 1])
+                        
                         with col_sub1:
                             st.text(sub)
+                        
                         with col_sub2:
+                            # Unsubscribe button for this topic
                             if st.button("❌", key=f"unsub_{device}_{sub}"):
-                                # Send unsubscribe message
+                                # Send MQTT unsubscribe message to device
                                 unsub_topic = f"{BASE_TOPIC}{device}/unsubscribe"
                                 st.session_state.mqtt_client.publish(unsub_topic, sub)
+                                
+                                # Remove from local tracking
                                 st.session_state.device_subscriptions[device].discard(sub)
+                                
+                               
                                 st.success(f"Sent unsubscribe: {sub}")
                 
                 # Remove device
@@ -335,7 +346,7 @@ elif not st.session_state.discovered_topics:
 st.divider()
 
 # Debug Information
-with st.expander("🔧 Debug Information"):
+with st.expander("Debug Information"):
     st.write(f"**Broker:** {MQTT_BROKER}:{MQTT_PORT}")
     st.write(f"**Username:** {MQTT_USERNAME}")
     st.write(f"**Base Topic:** {BASE_TOPIC}")
@@ -345,6 +356,7 @@ with st.expander("🔧 Debug Information"):
     st.write(f"**Topics Discovered:** {len(st.session_state.discovered_topics)}")
     st.write(f"**Managed Devices:** {len(st.session_state.managed_devices)}")
 
-# Auto-refresh every 2 seconds
+# Auto-refresh every 2 seconds to stay up-to-date
 time.sleep(2)
 st.rerun()
+
